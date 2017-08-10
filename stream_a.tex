@@ -1,0 +1,170 @@
+\pgfdeclarelayer{backgroundlayer}
+\pgfsetlayers{main,backgroundlayer}
+
+\begin{tikzpicture}
+  \begin{scope}[
+      every node/.style={rectangle,
+        draw=black,
+        fill=none,
+        anchor=center,
+        rounded corners,
+        text centered,
+        font=\normalsize,
+        line width=1pt,
+        text=black,
+        node distance=0.9cm},
+      the_step/.style={
+        drop shadow,
+        fill=white,
+        draw=black,
+        top color=white,
+        bottom color=black!20},
+      the_process/.style={
+        top color=white,
+        bottom color=blue!50!black!30,
+        font=\scriptsize,
+        rounded corners=0pt},
+      input/.style={
+        draw=red!50!black!50,
+        top color=white,
+        bottom color=red!50!black!20,
+        font=\itshape},
+      output/.style={
+        top color=white,
+        bottom color=green!40!black!50},
+      local bounding box=scope1
+    ]
+    \node [input] (fastq) at (0,0) {FastQ Files};
+
+    % QC
+    \node [below=of fastq.south, anchor=north, the_step] (qc) {
+      \begin{minipage}[t][2.2cm]{5cm}
+        \centering{Read QC}
+      \end{minipage}
+    };
+    \node [below=0.75cm of qc.north, anchor=north, the_process] (fastqc) {\texttt{fastqc.cwl}};
+    \node [below=0.5cm of fastqc, the_process] (trimmomatic) {\texttt{trimmomatic.cwl}};
+    \node [left=4.5cm of qc.west, anchor=center,output] (qc_a) {QC Report};
+    
+    % Read mapping
+    \node [below=of qc.south, anchor=north, the_step] (read_mapping) {
+      \begin{minipage}[t][1.15cm]{5cm}
+        \centering{Read Mapping}
+      \end{minipage}
+    };
+    \node [below=0.75cm of read_mapping.north, anchor=north, the_process] (bwa) {\texttt{bwa-mem.cwl}};
+
+    % Format conversion
+    \node [below=of read_mapping.south, anchor=north, the_step] (format_conversion) {
+      \begin{minipage}[t][1.8cm]{5cm}
+        \centering{Format Conversion}
+      \end{minipage}
+    };
+    \node [below=0.75 of format_conversion.north, anchor=north, text width=3cm, the_process]
+    (samtools) {\texttt{samtools-view.cwl\\samtools-sort.cwl\\samtools-index.cwl}};
+
+
+    % Statistics
+    \node [left=2cm of format_conversion.north west, anchor=east, output] (stats) {
+      \begin{minipage}[t][1.15cm]{5cm}
+        \centering{Statistics Report}
+      \end{minipage}
+    };
+    \node [below=0.75cm of stats.north, anchor=north, the_process] (bamstat) {\texttt{bamstat.cwl}};
+
+    % Coverage
+    \node [left=2cm of format_conversion.south west, anchor=east, output] (coverage) {
+      \begin{minipage}[t][1.15cm]{5cm}
+        \centering{Coverage Report}
+      \end{minipage}
+    };
+    \node [below=0.75cm of coverage.north, anchor=north, the_process] (depth) {\texttt{GATK-DepthOfCoverage.cwl}};
+
+    % Mark duplicates
+    \node [below=0.75cm of format_conversion.south, anchor=north, the_step] (mark_duplicates) {
+      \begin{minipage}[t][1.25cm]{5cm}
+        \centering{Mark Duplicates}
+      \end{minipage}
+    };
+    \node [below=0.75cm of mark_duplicates.north, anchor=north, the_process] (mark) {\texttt{picard-MarkDuplicates.cwl}};
+
+    % Realinment
+    \node [below=of mark_duplicates.south, anchor=north, the_step] (realignment) {
+      \begin{minipage}[t][2.25cm]{5cm}
+        \centering{Realignment}
+      \end{minipage}
+    };
+    \node [below=0.75cm of realignment.north, anchor=north, the_process] (realign_target) {\texttt{GATK-RealignTargetCreator.cwl}};
+    \node [below=0.5cm of realign_target, the_process] (indel) {\texttt{GATK-IndelRealigner.cwl}};
+    
+    % BQSR
+    \node [right=2cm of realignment.south east, anchor=south west, the_step] (bqsr_step) {
+      \begin{minipage}[t][2.75cm]{5cm}
+        \centering{Base Quality Score Recalibration (BQSR)}
+      \end{minipage}
+    };
+    \node [below=1.25cm of bqsr_step.north, anchor=north, the_process] (print) {\texttt{GATK-PrintReads.cwl}};
+    \node [below=0.5cm of print, the_process] (bqsr) {\texttt{GATK-BaseRecalibrator.cwl}};
+
+    % Haplotype caller
+    \node [above=of bqsr_step.north, anchor=south, the_step] (haplotype_caller) {
+      \begin{minipage}[t][1.25cm]{5cm}
+        \centering{Haplotype Calling}
+      \end{minipage}
+    };
+    \node [below=0.75cm of haplotype_caller.north, anchor=north, the_process] (haplo) {\texttt{GATK-HaplotypeCaller.cwl}};
+
+    % VQSR step
+    \node [above=of haplotype_caller.north, anchor=south, the_step] (vqsr_step) {
+      \begin{minipage}[t][3.4cm]{6cm}
+        \centering{Variant Quality Score Recalibration (VQSR)}
+      \end{minipage}
+    };
+    \node [below=1.25cm of vqsr_step.north, the_process] (apply) {\texttt{GATK-ApplyRecalibration.cwl}};
+    \node [below=0.5cm of apply, text width=5.25cm,anchor=north, the_process]
+    (vqsr) {\texttt{GATK-VariantRecalibrator-Indels.cwl}\\or\\\texttt{GATK-VariantRecalibrator-SNPs.cwl}};
+
+    % SNPeff step
+    \node [above=of vqsr_step.north, anchor=south, the_step] (snpeff_step) {
+      \begin{minipage}[t][1.25cm]{5cm}
+        \centering{SNPeff Annotation}
+      \end{minipage}
+    };
+    \node [below=0.75cm of snpeff_step.north, anchor=north, the_process] (snpeff) {\texttt{snpEff.cwl}};
+
+    % Output from snpeff
+    \node [above=of snpeff_step.north, xshift=1.5cm, anchor=south,output] (vcf_indel) {Indel VCF};
+    \node [above=of snpeff_step.north, xshift=-1.5cm, anchor=south,output] (vcf_snv) {SNV VCF};    
+    
+  \end{scope}
+
+  \begin{pgfonlayer}{backgroundlayer}
+    \draw [->,line width=1pt] (fastq.south) -- (qc.north) node[right,midway]{\scriptsize\textit{.fastq}};
+    \draw [->,line width=1pt] (fastqc.south) -- (trimmomatic.north);
+    \draw [->,line width=1pt] (qc.south) -- (read_mapping.north) node[right,midway]{\scriptsize\textit{.fastq}};
+    \draw [->,line width=1pt] (read_mapping.south) -- (format_conversion.north) node[right,midway]{\scriptsize\textit{.sam}};
+    \draw [->,line width=1pt] (format_conversion.south) -- (mark_duplicates.north) node[right,midway]{\scriptsize\textit{.bam}};
+    \draw [->,line width=1pt] (mark_duplicates.south) -- (realignment.north) node[right,midway]{\scriptsize\textit{.bam}};
+    \draw [->,line width=1pt] (realign_target.south) -- (indel.north);
+    \draw [->,line width=1pt] (realignment.east) --
+    (realignment.east -| bqsr_step.west) node[above,midway]{\scriptsize\textit{.bam}};
+
+    \draw [->,line width=1pt] (bqsr.north) -- (print.south);
+    \draw [->,line width=1pt] (bqsr_step.north) -- (haplotype_caller.south) node[right,midway]{\scriptsize\textit{.bam}};
+    \draw [->,line width=1pt] (haplotype_caller.north) -- (vqsr_step.south) node[right,midway]{\scriptsize\textit{.vcf}};
+    \draw [->,line width=1pt] (vqsr.north) -- (apply.south);    
+    \draw [->,line width=1pt] (vqsr_step.north) -- (snpeff_step.south) node[right,midway]{\scriptsize\textit{.vcf}};
+    \draw [->,line width=1pt, rounded corners] (format_conversion.west) --
+    ([xshift=-1cm]format_conversion.west) |- (stats.east) node[above,near end]{\scriptsize\textit{.bam}};
+
+    \draw [->,line width=1pt, rounded corners] (format_conversion.west) --
+    ([xshift=-1cm]format_conversion.west) |- (coverage.east) node[below,near end]{\scriptsize\textit{.bam}};
+
+    \draw [->,line width=1pt] (qc.west) -- (qc_a.east);
+    \draw [->,line width=1pt] ([xshift=-1.5cm]snpeff_step.north) --
+    ([xshift=-1.5cm]snpeff_step.north |- vcf_snv.south)  node[right,midway]{\scriptsize\textit{.vcf}};
+
+    \draw [->,line width=1pt] ([xshift=1.5cm]snpeff_step.north) --
+    ([xshift=1.5cm]snpeff_step.north |- vcf_indel.south)  node[right,midway]{\scriptsize\textit{.vcf}};
+  \end{pgfonlayer}
+\end{tikzpicture}

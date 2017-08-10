@@ -1,0 +1,81 @@
+\documentclass[a4paper,12pt,landscape]{article}
+\usepackage[sfdefault]{FiraSans} %% option 'sfdefault' activates Fira Sans as the default text font
+\usepackage{hhline}
+\usepackage{soul}
+\usepackage{setspace}
+\usepackage{adjustbox}
+\usepackage{tikz}
+\usepackage{lscape}
+\usepackage{footnote}
+\usepackage[margin=2cm]{geometry}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{fancyref}
+\usepackage{listings}
+\usepackage{subfigure}
+\usepackage{xcolor,colortbl}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{footnote}
+\usepackage{titlesec}
+\usepackage{mathptmx}
+\usepackage{ragged2e}
+\usepackage{amsthm}
+\usepackage[english]{babel}
+\usepackage{lipsum}
+\usepackage[para,online,flushleft]{threeparttable}
+
+\setlist[enumerate]{itemsep=1pt,parsep=0pt,before={\parskip=0pt}}
+
+% Pictures
+\usetikzlibrary{shadings,calc,calendar,positioning,shapes,trees,shadows,arrows,backgrounds,shapes.geometric,arrows,arrows.meta,decorations.pathreplacing,mindmap,backgrounds,scopes,automata,topaths,decorations.markings}
+
+% Spacing
+\singlespacing
+
+% Section spacing and font
+\titlespacing\section{0pt}{12pt}{0pt}
+\titlespacing\subsection{0pt}{12pt}{0pt}
+\titlespacing\subsubsection{0pt}{12pt}{0pt}
+\titleformat*{\section}{\normalsize\bfseries}
+\titleformat*{\subsection}{\normalsize\bfseries}
+\titleformat*{\subsubsection}{\normalsize\bfseries}
+
+% Circled numbers
+\newcommand*\circled[1]{\tikz[baseline=(char.base)]{\node[shape=circle,draw,inner sep=0.1pt] (char) {#1};}}
+\pagenumbering{gobble}
+
+\begin{document}
+  \section{Workflow A: Whole Genome/Exome NGS Data Analysis}
+  \begin{figure}[ht!]
+    \centering{
+      \input{stream_a.tex}
+    }
+  \end{figure}
+
+  \newpage
+  \section{Workflow B: 16S rRNA Diversity Analysis}
+  \begin{figure}[ht!]
+    \centering{
+      \input{stream_b.tex}
+    }
+  \end{figure}
+
+  \newpage
+  \section{Workflow C: Genome Wide-association studies}
+  \begin{figure}[ht!]
+    \centering{
+      \input{stream_c.tex}
+    }
+  \end{figure}
+
+  \newpage
+  \section{Workflow D: SNPs Imputation}
+  \begin{figure}[ht!]
+    \centering{
+      \input{stream_d.tex}
+    }
+  \end{figure}
+
+\end{document}

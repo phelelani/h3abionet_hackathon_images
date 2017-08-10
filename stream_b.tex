@@ -1,0 +1,190 @@
+\pgfdeclarelayer{backgroundlayer}
+\pgfsetlayers{main,backgroundlayer}
+
+\begin{tikzpicture}
+  \begin{scope}[
+      every node/.style={rectangle,
+        draw=black,
+        fill=none,
+        anchor=center,
+        rounded corners,
+        text centered,
+        font=\normalsize,
+        line width=1pt,
+        text=black,
+        node distance=1cm},
+      the_step/.style={
+        drop shadow=black,
+        fill=white,
+        top color=white,
+        bottom color=black!20},
+      the_process/.style={
+        top color=white,
+        bottom color=blue!50!black!30,
+        font=\scriptsize,
+        rounded corners=0pt},
+      input/.style={
+        draw=red!50!black!50,
+        top color=white,
+        bottom color=red!50!black!20,
+        font=\itshape},
+      output/.style={
+        top color=white,
+        bottom color=green!40!black!50},
+      local bounding box=scope1
+    ]
+    \node [input] (main) at (0,0) {
+      \parbox{9cm}{
+        \begin{itemize}[noitemsep,nolistsep]
+          \footnotesize
+        \item input.yml
+        \item Config parameters
+        \item Metadata file (sample\_id, fwd\_reads, rev\_reads)
+        \end{itemize}
+      }};
+
+    % Read merging
+    \node [the_step, left=3.75cm of main.center, anchor=north, yshift=-2cm] (read_merging) {
+      \begin{minipage}[t][2.2cm]{5cm}
+        \centering{Read Merging}
+      \end{minipage}
+    };
+    \node [below=0.75cm of read_merging.north, anchor=north, the_process] (uparseRenameFastq) {\texttt{uparseRenameFastQ.cwl}};
+    \node [below=0.5cm of uparseRenameFastq, the_process] (uparseFastqMerge) {\texttt{uparseFastqMerge.cwl}};
+
+    % Samples/Read QC
+    \node [output, right=2cm of read_merging.north east, anchor=north west] (read_qc) {
+      \begin{minipage}[t][1.15cm]{5cm}
+        \centering{Read QC}
+      \end{minipage}
+    };
+    \node [below=0.75cm of read_qc.north, anchor=north, the_process] (fastqc) {\texttt{fastqc.cwl}};
+
+    % Read filtering
+    \node [the_step, below=of read_merging.south, anchor=north] (read_filtering) {
+      \begin{minipage}[t][1.15cm]{5cm}
+        \centering{Read Filtering}
+      \end{minipage}
+    };
+    \node [below=0.75cm of read_filtering.north, anchor=north, the_process] (uparseFilter) {\texttt{uparseFilter.cwl}};
+
+    % OTU Picking
+    \node [the_step, below=of read_filtering.south, anchor=north] (otu_picking) {
+      \begin{minipage}[t][3.25cm]{5cm}
+        \centering{OTU Picking}
+      \end{minipage}
+    };
+    \node [below=0.75cm of otu_picking.north, anchor=north, the_process] (uparseDerepWorkAround) {\texttt{uparseDerepWorkAround.cwl}};
+    \node [below=0.5cm of uparseDerepWorkAround, the_process] (uparseSort) {\texttt{uparseSort.cwl}};
+    \node [below=0.5cm of uparseSort, the_process] (uparseOTUPick) {\texttt{uparseOTUPick.cwl}};
+
+    % Chimera detection
+    \node [the_step, below=of otu_picking.south, anchor=north] (chimera_detection) {
+      \begin{minipage}[t][2.2cm]{5cm}
+        \centering{Chimera Detection}
+      \end{minipage}
+    };
+    \node [below=0.75cm of chimera_detection.north,anchor=north, the_process] (uparseChimeraCheck) {\texttt{uparseChimeraCheck.cwl}};
+    \node [below=0.5cm of uparseChimeraCheck, the_process] (uparseRenameOTUs) {\texttt{uparseRenameOTUs.cwl}};
+
+    % Create phylogeny
+    \node [the_step, right=2cm of chimera_detection.south east, anchor=south west] (create_phylogeny) {
+      \begin{minipage}[t][3.25cm]{5cm}
+        \centering{Create Phylogeny}
+      \end{minipage}
+    };
+    \node [below=0.75cm of create_phylogeny.north, anchor=north, the_process] (qiimeAlignSeqs) {\texttt{qiimeAlignSeqs.cwl}};
+    \node [below=0.5cm of qiimeAlignSeqs, the_process] (qiimeFilterAlign) {\texttt{qiimeFilterAlign.cwl}};
+    \node [below=0.5cm of qiimeFilterAlign, the_process] (qiimeMakePhylogeny) {\texttt{qiimeMakePhylogeny.cwl}};    
+
+    % OTU classification
+    \node [the_step, above=of create_phylogeny.north, anchor=south] (otu_classification) {
+      \begin{minipage}[t][6.4cm]{5cm}
+        \centering{OTU Classification}
+      \end{minipage}
+    };
+    \node [below=0.75cm of otu_classification.north, anchor=north, the_process] (concatFasta) {\texttt{concatFasta.cwl}};
+    \node [below=0.5cm of concatFasta, the_process] (uparseGlobalSearchWorkAround) {\texttt{uparseGlobalSearchWorkAround.cwl}};
+    \node [below=0.5cm of uparseGlobalSearchWorkAround, the_process] (uparseOtuToTab) {\texttt{uparseOtuToTab.cwl}};
+    \node [below=0.5cm of uparseOtuToTab, the_process] (qiimeOtusTxt2Biom) {\texttt{qiimeOtusTxt2Biom.cwl}};
+    \node [below=0.5cm of qiimeOtusTxt2Biom, the_process] (qiimeAssigTaxonomy) {\texttt{qiimeAssigTaxonomy.cwl}};    
+    \node [below=0.5cm of qiimeAssigTaxonomy, the_process] (qiimeAddMetadata) {\texttt{qiimeAddMetadata.cwl}};
+
+    % OTU Summary
+    \node [output, right=2cm of otu_classification.north east, anchor=north west] (otu_summary) {
+      \begin{minipage}[t][2.25cm]{5cm}
+        \centering{OTU Summary}
+      \end{minipage}
+    };
+    \node [below=0.75cm of otu_summary.north, anchor=north, the_process] (qiimeSummaryQualitative) {\texttt{qiimeSummaryQualitative.cwl}};
+    \node [below=0.5cm of qiimeSummaryQualitative, the_process] (qiimeSummaryObservations) {\texttt{qiimeSummaryObservations.cwl}};
+
+    % Summary statistics
+    \node [output, below=1cm of otu_summary.south, anchor=north,text width=5cm] (summary_stats) {
+      \begin{minipage}[t][3.25cm]{5cm}
+        \centering{Summary Statistics}\\
+        \vspace{1cm}
+        \footnotesize{
+          Barplots (composition)\\
+          Heatmaps (OTU abundance)\\
+          Richness plots (metrics)\\
+          Ordination plots
+        }
+      \end{minipage}
+    };
+    \node [below=0.75cm of summary_stats.north, anchor=north, the_process] (generateRReports) {\texttt{generateRReports.cwl}};    
+  \end{scope}
+  
+  \begin{pgfonlayer}{backgroundlayer}
+    % Main
+    \draw [->,line width=1pt,rounded corners] (main.south) --
+    ([yshift=-0.5cm]main.south) -| (read_qc.north)  node[below,near start]{\scriptsize\textit{.fastq}};
+    \draw [->,line width=1pt,rounded corners] (main.south) --
+    ([yshift=-0.5cm]main.south) -| (read_merging.north) node[below,near start]{\scriptsize\textit{.fastq}};
+
+    % Read merging
+    \draw [->,line width=1pt] (read_merging.south) -- (read_filtering.north) node[right,midway]{\scriptsize\textit{.fastq}};
+    \draw [->,line width=1pt] (uparseRenameFastq.south) -- (uparseFastqMerge.north);
+
+    % Read filtering
+    \draw [->,line width=1pt] (read_filtering.south) --
+    (otu_picking.north) node[right,midway]{\scriptsize\textit{.fastq}};
+    \draw [->,line width=1pt] (read_filtering) --
+    (read_filtering -| otu_classification.west) node[above,midway]{\scriptsize\textit{.fastq}};
+
+    % OTU Picking
+    \draw [->,line width=1pt] (uparseDerepWorkAround.south) -- (uparseSort.north);
+    \draw [->,line width=1pt,rounded corners] (uparseSort.south) -- (uparseOTUPick.north);
+    \draw [->,line width=1pt] (otu_picking.south) -- (chimera_detection.north) node[right,midway]{\scriptsize\textit{.fasta}};
+    \draw [->,line width=1pt] (uparseChimeraCheck.south) -- (uparseRenameOTUs.north);
+
+
+    % OTU classification
+    \draw [->,line width=1pt] (concatFasta.south) -- (uparseGlobalSearchWorkAround.north);
+    \draw [->,line width=1pt] (uparseGlobalSearchWorkAround.south) -- (uparseOtuToTab.north);
+    \draw [->,line width=1pt] (uparseOtuToTab.south) -- (qiimeOtusTxt2Biom.north);
+    \draw [->,line width=1pt,rounded corners] (qiimeOtusTxt2Biom.east) -- ([xshift=0.5cm]qiimeOtusTxt2Biom.east) |- (qiimeAddMetadata.east);
+    \draw [->,line width=1pt] (qiimeAssigTaxonomy.south) -- (qiimeAddMetadata.north);
+
+    % Create phylogeny
+    \draw [->,line width=1pt, rounded corners] (chimera_detection.east) --
+    ([xshift=1cm]chimera_detection.east) |- (create_phylogeny.west) node[above,near end]{\scriptsize\textit{.fasta}};
+    \draw [->,line width=1pt,rounded corners] (chimera_detection.east) --
+    ([xshift=1cm]chimera_detection.east) |- (otu_classification.west) node[above,near end]{\scriptsize\textit{.fasta}};
+
+    % Results
+    \draw [->,line width=1pt] (qiimeAlignSeqs.south) -- (qiimeFilterAlign.north);
+    \draw [->,line width=1pt] (qiimeFilterAlign.south) --(qiimeMakePhylogeny.north);
+
+    \draw [->,line width=1pt,rounded corners] (otu_classification.east) --
+    ([xshift=1cm]otu_classification.east) |- (otu_summary.west) node[above,near end]{\scriptsize\textit{.biom}};
+    \draw [->,line width=1pt,rounded corners] (otu_classification.east) --
+    ([xshift=1cm]otu_classification.east) |- (summary_stats.west) node[below,near end]{\scriptsize\textit{.biom}};
+    \draw [->,line width=1pt,rounded corners] (create_phylogeny.east) -|
+    (summary_stats.south) node[above,near start]{\scriptsize\textit{.tree}};
+      
+  \end{pgfonlayer}
+  
+\end{tikzpicture}
+
+  

@@ -1,0 +1,210 @@
+\pgfdeclarelayer{backgroundlayer}
+\pgfsetlayers{backgroundlayer,main}
+
+\begin{tikzpicture}
+  \begin{scope}[
+      every node/.style={rectangle,
+        draw=black,
+        fill=none,
+        anchor=center,
+        rounded corners,
+        text centered,
+        font=\normalsize,
+        line width=1pt,
+        text=black,
+        node distance=1cm},
+      the_step/.style={
+        drop shadow=black,
+        fill=white,
+        top color=white,
+        bottom color=black!20},
+      the_process/.style={
+        top color=white,
+        bottom color=blue!50!black!30,
+        font=\scriptsize,
+        rounded corners=0pt},
+      input/.style={
+        draw=red!50!black!50,
+        top color=white,
+        bottom color=red!50!black!20,
+        font=\itshape},
+      output/.style={
+        top color=white,
+        bottom color=green!40!black!50},
+      local bounding box=scope1
+    ]
+
+    % Main nodes
+    \node [input] (main) at (0,0) {Study Genotypes};
+
+    % 1. Identify Regions to impute
+    \node [the_step, below=1.5cm of main.south, anchor=north,xshift=-7cm] (identify) {
+      \begin{minipage}[t][1.65cm]{5cm}
+        \centering{Identify Regions to Impute}
+      \end{minipage}
+    };
+    \node [below=1.25cm of identify.north, anchor=north, the_process] () {\texttt{perl}};
+
+    % 5. Calculate list of Chunks
+    \node [the_step, below=of identify.south, anchor=north] (calc_chunks) {
+      \begin{minipage}[t][1.15cm]{5cm}
+        \centering{Calculate List of Chunks}
+      \end{minipage}
+    };
+    \node [below=0.75 of calc_chunks.north, anchor=north, the_process] () {\texttt{nextflow}};
+
+    % 2. Split by chromosome
+    \node [the_step, below=1.5cm of main.south, anchor=north] (split) {
+      \begin{minipage}[t][1.25cm]{5cm}
+        \centering{Split by Chromosome}
+      \end{minipage}
+    };
+    \node [below=0.75cm of split.north, anchor=north, the_process] () {\texttt{plink}};
+
+    % 3. Check genotypes
+    \node [the_step, below=of split.south, anchor=north] (check) {
+      \begin{minipage}[t][1.15cm]{5cm}
+        \centering{Check Genotypes}
+      \end{minipage}
+    };
+    \node [below=0.75 of check.north, anchor=north, the_process] () {\texttt{shapeit}};
+
+    % 4. Prephase each chromosome
+    \node [the_step, below=of check] (prephase) {
+      \begin{minipage}[t][1.65cm]{5cm}
+        \centering{Pre-phase each Chromosome.}
+      \end{minipage}
+    };
+    \node [below=1.25 of prephase.north, anchor=north, the_process] () {\texttt{shapeit}};
+
+    % 6. Impute chunks with prephased
+    \node [the_step, below=of prephase] (impute) {
+      \begin{minipage}[t][1.65cm]{5cm}
+        \centering{Impute Chunks with Pre-phased}
+      \end{minipage}
+    };
+    \node [below=1.25 of impute.north, anchor=north, the_process] () {\texttt{impute2}};
+
+    % Reference Panel
+    \node [input, below=4.2cm of calc_chunks.south, anchor=north] (ref) {Reference Panel};
+
+
+    % 7. Combine chunks into chromosomes
+    \node [the_step, right=2cm of impute.east,anchor=west] (combine_chunks) {
+      \begin{minipage}[t][1.65cm]{5cm}
+        \centering{Combine Chunks into Chromosomes}
+      \end{minipage}
+    };
+    \node [below=1.25 of combine_chunks.north, anchor=north, the_process] () {\texttt{gtool}};
+
+    % 8. Convert to PLINK
+    \node [the_step, above=of combine_chunks.north, anchor=south] (convert) {
+      \begin{minipage}[t][1.15cm]{5cm}
+        \centering{Convert to PLINK}
+      \end{minipage}
+    };
+    \node [below=0.75 of convert.north, anchor=north, the_process] () {\texttt{gtool}};
+
+    % 9. Combine Chromosomes
+    \node [the_step, above=of convert.north, anchor=south ] (combine_chrom) {
+      \begin{minipage}[t][1.15cm]{5cm}
+        \centering{Combine Chromosomes}
+      \end{minipage}
+    };
+    \node [below=0.75 of combine_chrom.north, anchor=north, the_process] () {\texttt{plink}};
+
+    % 10. Generate reports
+    \node [the_step, above=2.5cm of combine_chrom.north, anchor=south] (reports) {
+      \begin{minipage}[t][1.15cm]{5cm}
+        \centering{Generate Reports}
+      \end{minipage}
+    };
+    \node [below=0.75 of reports.north, anchor=north, the_process] () {\texttt{python}};
+
+    \node [above=of reports.north, anchor=south,output] (pdf) {PDF Report};
+    \node [above=of combine_chrom.north, anchor=south,output] (vars) {Imputed Variants};
+  \end{scope}
+  
+  \begin{pgfonlayer}{backgroundlayer}
+
+    % Check Genotypes
+    \node [fill=white, rounded corners, draw=gray, above=0cm of check.north, anchor=north,xshift=-0.1cm,yshift=0.1cm] () {
+      \begin{minipage}[t][1.15cm]{5cm}
+        \centering{~}
+      \end{minipage}
+    };
+    
+    % Prephase
+    \node [fill=white, rounded corners, draw=gray, above=0cm of prephase.north, anchor=north, xshift=-0.1cm,yshift=0.1cm] () {
+        \begin{minipage}[t][1.65cm]{5cm}
+        \centering{~}
+      \end{minipage}
+    };
+    
+    % Impute
+    \node [fill=white, rounded corners, draw=gray, above=0cm of impute.north, anchor=north, xshift=-0.2cm,yshift=0.2cm] () {
+        \begin{minipage}[t][1.65cm]{5cm}
+        \centering{~}
+      \end{minipage}
+    };
+    \node [fill=white, rounded corners, draw=gray, above=0cm of impute.north, anchor=north,xshift=-0.1cm,yshift=0.1cm] () {
+        \begin{minipage}[t][1.65cm]{5cm}
+        \centering{~}
+      \end{minipage}
+    };
+
+    % Combine chunks
+    \node [fill=white, rounded corners, draw=gray, above=0cm of combine_chunks.north, anchor=north, xshift=-0.1cm,yshift=0.1cm] () {
+        \begin{minipage}[t][1.65cm]{5cm}
+        \centering{~}
+      \end{minipage}
+    };
+
+    % Convert to plink
+    \node [fill=white, rounded corners, draw=gray, above=0cm of convert.north, anchor=north,xshift=-0.1cm,yshift=0.1cm] () {
+        \begin{minipage}[t][1.15cm]{5cm}
+        \centering{~}
+      \end{minipage}
+    };
+
+    \draw [->,line width=1pt,rounded corners] (main.south) -- (split.north) node[right,midway]{\scriptsize\textit{.\{ped,map\}}};
+    \draw [->,line width=1pt,rounded corners] (main.west) -| (identify.north) node[above,near start]{\scriptsize\textit{.\{ped,map\}}};
+    \draw [->,line width=1pt,rounded corners] (split.south) -- (check.north) node[right,midway]{\scriptsize\textit{.\{ped,map\}}};
+    \draw [->,line width=1pt,rounded corners] ([yshift=-0.5cm]split.west) --
+    ([xshift=-0.5cm,yshift=-0.5cm]split.west) |- (prephase.west) node[right,near start,yshift=1.6cm]{\scriptsize\textit{.\{ped,map\}}};
+
+    \draw [->,line width=1pt,rounded corners] (check.south) -- (prephase.north) node[right,midway]{\scriptsize\textit{.txt}};
+    \draw [->,line width=1pt,rounded corners] (prephase.south) -- (impute.north) node[right,midway]{\scriptsize\textit{.\{haps,sample\}}};
+    \draw [->,line width=1pt,rounded corners] (ref.east) -- (impute.west) node[below,midway]{\scriptsize\textit{.\{hap,map,leg\}}};
+    \draw [->,line width=1pt,rounded corners] (calc_chunks.east) --
+    ([xshift=0.5cm]calc_chunks.east) |- ([yshift=0.5cm]impute.west) node[left,near start]{\scriptsize\textit{channel}};
+
+    \draw [->,line width=1pt,rounded corners] (impute.east) --
+    (combine_chunks.west) node[below,midway]{\scriptsize\textit{.\{haps,sample\}}};
+
+    \draw [->,line width=1pt,rounded corners] (combine_chunks.north) --
+    (convert.south) node[right,midway]{\scriptsize\textit{.\{haps,sample\}}};
+
+    \draw [->,line width=1pt,rounded corners] (convert.north) --
+    (combine_chrom) node[right,midway]{\scriptsize\textit{.\{bed,bim,fam\}}};
+
+    \draw [->,line width=1pt,rounded corners] (combine_chrom.north) --
+    (vars.south) node[right,midway]{\scriptsize\textit{.\{bed,bim,fam\}}};;
+
+    \draw [->,line width=1pt,rounded corners] (reports.north) -- (pdf.south);
+    \draw [->,line width=1pt,rounded corners] (identify.south) --
+    (calc_chunks.north) node[right,midway]{\scriptsize\textit{.txt}};
+
+    \draw [->,line width=1pt,rounded corners] (identify.east) --
+    (identify.east -| split.west) node[above,midway]{\scriptsize\textit{.txt}};
+
+    \draw [->,line width=1pt,rounded corners, dashed, red] ([yshift=0.5cm]impute.east) --
+    ([yshift=0.5cm,xshift=0.5cm]impute.east) |- (reports.west) node[right,near start]{\scriptsize\textit{.txt}};
+
+    \draw [->,line width=1pt,rounded corners,red,dashed] (combine_chrom.east) --
+    ([xshift=0.5cm]combine_chrom.east) |- (reports.east) node[right,near start]{\scriptsize\textit{.txt}};
+  \end{pgfonlayer}
+  
+\end{tikzpicture}
+
+  

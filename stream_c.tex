@@ -1,0 +1,253 @@
+\pgfdeclarelayer{backgroundlayer}
+\pgfsetlayers{main,backgroundlayer}
+
+\begin{tikzpicture}
+  \begin{scope}[
+      every node/.style={rectangle,
+        draw=black,
+        fill=none,
+        anchor=center,
+        rounded corners,
+        text centered,
+        font=\normalsize,
+        line width=1pt,
+        text=black,
+        node distance=0.9cm},
+      the_step/.style={
+        font=\small,
+        drop shadow,
+        fill=white,
+        draw=black,
+        top color=white,
+        bottom color=black!20},
+      the_process/.style={
+        top color=white,
+        bottom color=blue!50!black!30,
+        font=\scriptsize,
+        rounded corners=0pt},
+      input/.style={
+        draw=red!50!black!50,
+        top color=white,
+        bottom color=red!50!black!20,
+        font=\itshape},
+      output/.style={
+        top color=white,
+        bottom color=green!40!black!50},
+      local bounding box=scope1
+    ]
+
+    % Input
+    \node [input] (main) at (0,0) {Input Files};
+
+    % Get Duplicate Markers and Remove Duplicate SNPs
+    \node [below=of main.south, anchor=north,the_step] (getDuplicateMarkers) {
+      \begin{minipage}[t][2.7cm]{5cm}
+        \centering{Identify and Remove Duplicate SNPs}
+      \end{minipage}
+    };
+    \node [below=1.15cm of getDuplicateMarkers.north, anchor=north, the_process] (get_dups) {\texttt{dups.py}};
+    \node [below=0.5cm of get_dups.south, anchor=north, the_process] (remove_dups) {\texttt{plink}};
+
+    % Identify Individual Sex Discordant Information
+    \node [below=of getDuplicateMarkers.south, anchor=north,the_step] (identifyIndivDiscSexinfo) {
+      \begin{minipage}[t][1.6cm]{5cm}
+        \centering{Identify Individuals with Discordant Sex Information}
+      \end{minipage}
+    };
+    \node [below=1.15cm of identifyIndivDiscSexinfo.north, anchor=north, the_process] () {\texttt{plink}};
+    
+    % Pruning
+    \node [below=of identifyIndivDiscSexinfo.south, anchor=north,the_step] (pruneForIBD) {
+      \begin{minipage}[t][1cm]{5cm}
+        \centering{Prune for SNPs in LD for IBD}
+      \end{minipage}
+    };
+    \node [below=0.6cm of pruneForIBD.north, anchor=north, the_process] () {\texttt{plink}};
+
+    % Find missingness statistics for the plink file
+    \node [below=of pruneForIBD.south, anchor=north,the_step] (calculateSampleMissing) {
+      \begin{minipage}[t][1.6cm]{5cm}
+        \centering{Calculate Individual Missingness Statistics}
+      \end{minipage}
+    };
+    \node [below=1.15cm of calculateSampleMissing.north, anchor=north, the_process] () {\texttt{plink}};
+
+    % Calculate Sample Heterozygosity
+    \node [below=of calculateSampleMissing.south, anchor=north,the_step] (calculateSampleHetrozygosity) {
+      \begin{minipage}[t][1.6cm]{5cm}
+        \centering{Calculate Individual Hetrozygosity}
+      \end{minipage}
+    };
+    \node [below=1.15cm of calculateSampleHetrozygosity.north, anchor=north, the_process] () {\texttt{plink}};
+
+    % Remove Individuals
+    \node [right=2cm of identifyIndivDiscSexinfo.east,the_step,anchor=west,yshift=-0.8cm] (removeQCIndivs) {%at ([xshift=2cm]$(identifyIndivDiscSexinfo.south east)!0.5!(pruneForIBD.north east)$) {
+      \begin{minipage}[t][1.15cm]{5cm}
+        \centering{Remove QC Individuals}
+      \end{minipage}
+    };
+    \node [below=0.75cm of removeQCIndivs.north, anchor=north, the_process] () {\texttt{plink}};
+
+    % Find Related Individuals
+    \node [the_step,anchor=west] (findRelatedIndiv) at ([xshift=2cm]$(pruneForIBD.south east)!0.5!(calculateSampleMissing.north east)$) {
+      \begin{minipage}[t][1cm]{5cm}
+        \centering{Identify Related Individuals}
+      \end{minipage}
+    };
+    \node [below=0.6cm of findRelatedIndiv.north, anchor=north, the_process] () {\texttt{run\_IBD\_QC\_qcplink.pl}};
+
+    % Remove Individuals
+    \node [anchor=west, the_step] (getBadIndivs_Missing_Het) at ([xshift=2cm]$(calculateSampleMissing.south east)!0.5!(calculateSampleHetrozygosity.north east)$) {
+      \begin{minipage}[t][2.1cm]{5cm}
+        \centering{Identify Individuals with High Missingness and/or Bad Heterozygosity}
+      \end{minipage}
+    };
+    \node [below=1.6cm of getBadIndivs_Missing_Het.north, anchor=north, the_process] () {\texttt{select\_miss\_het\_qcplink.pl}};
+
+    % Calculate MAF
+    \node [above=of removeQCIndivs.north, the_step,anchor=south] (calculateMaf) {
+      \begin{minipage}[t][1.6cm]{5cm}
+        \centering{Calculate Minor Allele Frequency}
+      \end{minipage}
+    };
+    \node [below=1.15cm of calculateMaf.north, anchor=north, the_process] () {\texttt{plink}};
+
+    % Calculate Missingness
+    \node [above=of calculateMaf.north, the_step,anchor=south] (calculateSnpMissingness) {
+      \begin{minipage}[t][1cm]{5cm}
+        \centering{Calculate SNP Missingness}
+      \end{minipage}
+    };
+    \node [below=0.6cm of calculateSnpMissingness.north, anchor=north, the_process] () {\texttt{plink}};
+
+    % Calculate Skewness
+    \node [right=2cm of calculateMaf.east, the_step, anchor=west] (calculateSnpSkewStatus) {
+      \begin{minipage}[t][1.6cm]{5cm}
+        \centering{Calculate Differential Missingness}
+      \end{minipage}
+    };
+    \node [below=1.15cm of calculateSnpSkewStatus.north, anchor=north, the_process] () {\texttt{plink}};
+
+    % Find those SNPs that have diff missingness in cases & controls
+    \node [below=of calculateSnpSkewStatus.south, the_step, anchor=north] (findSnpExtremeDifferentialMissingness) {
+      \begin{minipage}[t][1.6cm]{5cm}
+        \centering{Identify SNPs with Differrential Missingness}
+      \end{minipage}
+    };
+    \node [below=1.15cm of findSnpExtremeDifferentialMissingness.north, anchor=north, the_process] () {\texttt{select\_diffmiss\_qcplink.pl}};
+
+    % remove really realy bad SNPs and really bad individuals
+    \node [below=of findSnpExtremeDifferentialMissingness.south, the_step, anchor=north] (removeQCPhase1) {
+      \begin{minipage}[t][1.6cm]{5cm}
+        \centering{Remove SNPs that Fail Based on Threshold Selected}
+      \end{minipage}
+    };
+    \node [below=1.15cm of removeQCPhase1.north, anchor=north, the_process] () {\texttt{plink}};
+
+    % Prinicipa Components
+    \node [below=of removeQCPhase1.south, the_step, anchor=north] (compPCA) {
+      \begin{minipage}[t][1.6cm]{5cm}
+        \centering{Principal Component Analysis}
+      \end{minipage}
+    };
+    \node [below=1.15cm of compPCA.north, anchor=north, the_process] () {\texttt{plink}};
+
+    % SPN HWE
+    \node [above=of calculateSnpSkewStatus.north, the_step, anchor=south] (findHWEofSNPs) {
+      \begin{minipage}[t][1.6cm]{5cm}
+        \centering{Calculate HWE scores of each SNP}
+      \end{minipage}
+    };
+    \node [below=1.15cm of findHWEofSNPs.north, anchor=north, the_process] () {\texttt{plink}};
+
+    % Outputs
+    \node [right=1cm of findHWEofSNPs.south east, output, anchor=north west] (theOutputs) {
+      \begin{minipage}[t][6.35cm]{4cm}
+        \centering{Generate Outputs/Plots (\texttt{R})}
+      \end{minipage}
+    };
+    \node [below=1.15cm of theOutputs.north, anchor=north, the_process] (out_1) {\texttt{miss\_het\_plot\_qcplink.R}};
+    \node [below=0.25cm of out_1.south, anchor=north, the_process] (out_2) {\texttt{maf\_plot\_qcplink.R}};
+    \node [below=0.25cm of out_2.south, anchor=north, the_process] (out_3) {\texttt{snpmiss\_plot\_qcplink.R}};
+    \node [below=0.25cm of out_3.south, anchor=north, the_process] (out_4) {\texttt{imiss\_splot.R}};
+    \node [below=0.25cm of out_4.south, anchor=north, the_process] (out_5) {\texttt{diffmiss\_splot\_qcplink.R}};
+    \node [below=0.25cm of out_5.south, anchor=north, the_process] (out_6) {\texttt{hwe\_plot\_qcplink.R}};
+    \node [below=0.25cm of out_6.south, anchor=north, the_process] (out_7) {\texttt{drawPCA.R}};
+
+    \node [below=of theOutputs.south, the_step, anchor=north] (theReport) {
+      \begin{minipage}[t][1cm]{4cm}
+        \centering{Generate Report}
+      \end{minipage}
+    };
+    \node [below=0.6cm of theReport.north, anchor=north, the_process] (out_1) {\texttt{qcreport.py}};
+
+    \node [below=of theReport.south, anchor=north, output] (final_report) {PDF Report};
+
+
+    
+  \end{scope}
+  
+  \begin{pgfonlayer}{backgroundlayer} 
+    \draw [->,line width=1pt] (main.south) -- (getDuplicateMarkers.north) node[right,midway]{\scriptsize\textit{.\{bed,bim,fam\} - Raw}};
+    \draw [->,line width=1pt, black] (get_dups.south) -- (remove_dups.north);
+    \draw [->,line width=1pt, rounded corners] (getDuplicateMarkers.west)
+    -- ([xshift=-0.5cm]getDuplicateMarkers.west) |- (identifyIndivDiscSexinfo.west)
+    node[rotate=90,above,near start]{\scriptsize\textit{.\{bed,bim,fam\} - No duplicates}};
+    \draw [->,line width=1pt, rounded corners] (getDuplicateMarkers.west)
+    -- ([xshift=-0.5cm]getDuplicateMarkers.west) |- (pruneForIBD.west);
+    \draw [->,line width=1pt, rounded corners] (getDuplicateMarkers.west)
+    -- ([xshift=-0.5cm]getDuplicateMarkers.west) |- (calculateSampleMissing.west);
+    \draw [->,line width=1pt, rounded corners] (getDuplicateMarkers.west)
+    -- ([xshift=-0.5cm]getDuplicateMarkers.west) |- (calculateSampleHetrozygosity.west);
+
+    \draw [->,line width=1pt, rounded corners] (identifyIndivDiscSexinfo.east) -- ([xshift=1cm]identifyIndivDiscSexinfo.east)
+    |- ($(removeQCIndivs.south)!0.5!(findRelatedIndiv.north)$) node[above,near start,rotate=-90]{\scriptsize\textit{failed\_sex\_check}} -- (removeQCIndivs.south);
+    \draw [->,line width=1pt, rounded corners] (pruneForIBD.east)
+    -- ([xshift=0.5cm]pruneForIBD.east) |- ([yshift=0.5cm]findRelatedIndiv.west) node[above,near end]{\scriptsize\textit{.genome}};
+    \draw [->,line width=1pt, rounded corners] (calculateSampleMissing.east)
+    -- ([xshift=0.5cm]calculateSampleMissing.east) |- ([yshift=-0.5cm]findRelatedIndiv.west) node[above,near end]{\scriptsize\textit{.imiss}};
+    \draw [->,line width=1pt, rounded corners] (calculateSampleMissing.east)
+    -- ([xshift=0.5cm]calculateSampleMissing.east) |- ([yshift=0.5cm]getBadIndivs_Missing_Het.west) node[above,near end]{\scriptsize\textit{.imiss}};
+    \draw [->,line width=1pt, rounded corners] (calculateSampleHetrozygosity.east)
+    -- ([xshift=0.5cm]calculateSampleHetrozygosity.east) |- ([yshift=-0.5cm]getBadIndivs_Missing_Het.west) node[above,near end]{\scriptsize\textit{.het}};
+
+
+    \draw [->,line width=1pt, rounded corners] (getBadIndivs_Missing_Het.east) -- ([xshift=1.25cm]getBadIndivs_Missing_Het.east)
+    |- ($(removeQCIndivs.south)!0.5!(findRelatedIndiv.north)$) node[above,near start,rotate=-90]{\scriptsize\textit{failed\_miss\_het}} -- (removeQCIndivs.south);
+    \draw [->,line width=1pt, rounded corners] (findRelatedIndiv.east) -- ([xshift=0.5cm]findRelatedIndiv.east)
+    |- ($(removeQCIndivs.south)!0.5!(findRelatedIndiv.north)$) node[above,near start,rotate=-90]{\scriptsize\textit{rel\_indivs}} -- (removeQCIndivs.south);
+
+    \draw [->,line width=1pt, rounded corners] (removeQCIndivs.east)
+    -- ([xshift=0.5cm]removeQCIndivs.east) |- (calculateMaf.east) node[above,near start,rotate=-90]{\scriptsize\textit{.\{bed,bim,fam\} - QC1}};
+    \draw [->,line width=1pt, rounded corners] (removeQCIndivs.east)
+    -- ([xshift=0.5cm]removeQCIndivs.east) |- (calculateSnpMissingness.east);
+    \draw [->,line width=1pt, rounded corners] (removeQCIndivs.east)
+    -- ([xshift=0.5cm]removeQCIndivs.east) |- (calculateSnpSkewStatus.west);
+
+    \draw [->,line width=1pt, rounded corners] (calculateSnpSkewStatus.north) -- (findHWEofSNPs.south);
+    \draw [->,line width=1pt, rounded corners] (calculateSnpSkewStatus.south) -- (findSnpExtremeDifferentialMissingness.north);
+    \draw [->,line width=1pt, rounded corners] (findSnpExtremeDifferentialMissingness.south) -- (removeQCPhase1.north);
+    \draw [->,line width=1pt, rounded corners] (removeQCPhase1.south) -- (compPCA.north) node[right,midway]{\scriptsize\textit{.\{bed,bim,fam\} - QC2}};
+
+    \draw [->,line width=1pt, rounded corners, red, dashed] (calculateSnpMissingness.north)
+    -- ([yshift=1cm]calculateSnpMissingness.north) -| (theOutputs.north);
+    \draw [-,line width=1pt, rounded corners, red, dashed] (calculateMaf.west)
+    -- ([xshift=-0.5cm]calculateMaf.west) |- ([yshift=1cm]calculateSnpMissingness.north);
+    \draw [-,line width=1pt, rounded corners, red, dashed] (findHWEofSNPs.east) -- ([xshift=3.1cm]findHWEofSNPs.east);
+    \draw [->,line width=1pt, rounded corners, red, dashed] (calculateSnpSkewStatus.east) --
+    (calculateSnpSkewStatus.east -| theOutputs.west);
+    
+    \draw [->,line width=1pt, rounded corners, red, dashed] ([yshift=-0.5cm]calculateSampleHetrozygosity.east) -|
+    ($(findHWEofSNPs.east)!0.5!(theReport.west)$) |- (theOutputs.west);
+    \draw [-,line width=1pt, rounded corners, red, dashed] ([yshift=-0.5cm]calculateSampleMissing.east)
+    -| ([xshift=1cm, yshift=-0.5cm]calculateSampleHetrozygosity.east);
+    \draw [-,line width=1pt, rounded corners, red, dashed] (compPCA.south) --
+    ([yshift=-0.5cm]compPCA.south |- calculateSampleHetrozygosity.east);
+
+    \draw [->,line width=1pt] (theOutputs.south) -- (theReport.north);
+    \draw [->,line width=1pt] (theReport.south) -- (final_report.north);
+  \end{pgfonlayer}
+  
+\end{tikzpicture}
+
+  
